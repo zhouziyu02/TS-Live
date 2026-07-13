@@ -1,0 +1,66 @@
+name: Community model leaderboard request
+description: Submit a public model card and forecasting endpoint for future live evaluations.
+title: "[Community model]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Validate the endpoint with `scripts/validate_external_model_endpoint.py` before submitting. Never paste Hugging Face tokens or other secrets here.
+  - type: input
+    id: model_id
+    attributes:
+      label: Model ID
+      description: Public Hugging Face model repository ID, for example `username/model-name`.
+    validations:
+      required: true
+  - type: input
+    id: model_card
+    attributes:
+      label: Public model card URL
+      placeholder: https://huggingface.co/username/model-name
+    validations:
+      required: true
+  - type: input
+    id: space
+    attributes:
+      label: Public Space URL
+      placeholder: https://huggingface.co/spaces/username/forecast-space
+    validations:
+      required: true
+  - type: input
+    id: endpoint
+    attributes:
+      label: Forecast endpoint URL
+      placeholder: https://username-forecast-space.hf.space/forecast
+    validations:
+      required: true
+  - type: textarea
+    id: metadata
+    attributes:
+      label: community_model.yaml
+      description: Paste the complete generated YAML metadata.
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: receipt
+    attributes:
+      label: Validator output
+      description: 'Paste the JSON output containing `"status": "ok"`.'
+      render: json
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: The model card, Space, and endpoint are public.
+          required: true
+        - label: I operate the endpoint and accept its inference traffic and cost.
+          required: true
+        - label: I understand scoring begins only on future releases after acceptance.
+          required: true
+        - label: I will keep the endpoint available for repeated live evaluation.
+          required: true

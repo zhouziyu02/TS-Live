@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import sys
+import time
 from urllib.parse import urlparse
 
 import httpx
@@ -24,6 +25,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prediction-length", type=int, default=8)
     parser.add_argument("--context-length", type=int, default=64)
     parser.add_argument("--timeout", type=float, default=90.0)
+    parser.add_argument("--wait-seconds", type=float, default=0.0)
+    parser.add_argument("--retry-interval", type=float, default=15.0)
     parser.add_argument("--allow-http", action="store_true")
     return parser.parse_args()
 
@@ -78,12 +81,26 @@ def main() -> int:
             "quantiles": QUANTILES,
         },
     }
+    deadline = time.monotonic() + max(0.0, args.wait_seconds)
     with httpx.Client(timeout=args.timeout, trust_env=False) as client:
-        response = client.post(args.endpoint_url, json=payload)
-        response.raise_for_status()
-    if len(response.content) > MAX_RESPONSE_BYTES:
-        raise ValueError("endpoint response exceeds 5 MiB")
-    checked = validate_response(response.json(), args.prediction_length)
+        while True:
+            try:
+                response = client.post(args.endpoint_url, json=payload)
+                response.raise_for_status()
+                if len(response.content) > MAX_RESPONSE_BYTES:
+                    raise ValueError("endpoint response exceeds 5 MiB")
+                checked = validate_response(response.json(), args.prediction_length)
+                break
+            except (ValueError, httpx.HTTPError, json.JSONDecodeError) as exc:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise
+                delay = min(max(0.1, args.retry_interval), remaining)
+                print(
+                    f"Endpoint not ready ({exc}); retrying in {delay:.1f}s",
+                    file=sys.stderr,
+                )
+                time.sleep(delay)
     print(json.dumps({
         "status": "ok",
         "model_id": args.model_id,

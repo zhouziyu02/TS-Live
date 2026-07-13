@@ -131,12 +131,23 @@ dependencies, and inference cost.
 
 ## Validation
 
-Before review, endpoint owners can run:
+Install the repository requirements and authenticate with Hugging Face before
+uploading the prepared Space directory:
+
+```bash
+python -m pip install -r requirements.txt
+hf auth login
+hf upload "$SPACE_ID" forecast-space . --repo-type space
+```
+
+Before review, endpoint owners can run the validator with a wait window that
+covers the initial Docker build and a possible cold start:
 
 ```bash
 python3 scripts/validate_external_model_endpoint.py \
   --endpoint-url https://hf-user-my-tsfm-forecast-api.hf.space/forecast \
-  --model-id My-TSFM
+  --model-id My-TSFM \
+  --wait-seconds 900
 ```
 
 The command succeeds only after it receives and validates a complete forecast;
@@ -144,6 +155,10 @@ The command succeeds only after it receives and validates a complete forecast;
 automatically submit or enable the model.
 
 Maintainers should also run this validation before enabling an entry.
+
+Submit the public model card URL, Space URL, endpoint URL, and the contents of
+`community_model.yaml` using the
+[community model request form](https://github.com/zhouziyu02/TS-Live/issues/new?template=community-model.yml).
 
 ## Fairness Policy
 

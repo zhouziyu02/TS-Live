@@ -16,26 +16,40 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Create a public Hugging Face **Docker Space**, then copy the endpoint template:
+Create a public Hugging Face **Docker Space** in the web UI, authenticate the
+CLI, then copy the endpoint template:
 
 ```bash
 export SPACE_ID="your-hf-username/your-forecast-space"
-git clone "https://huggingface.co/spaces/${SPACE_ID}" forecast-space
+hf auth login
+hf auth whoami
+mkdir -p forecast-space
 cp examples/community_endpoint/{app.py,Dockerfile,requirements.txt,README.md,.dockerignore} forecast-space/
 ```
 
-Replace `forecast_one` in `forecast-space/app.py`, commit, and push that Space.
-When its `/health` route is ready, validate the deployed `/forecast` route:
+Replace `forecast_one` in `forecast-space/app.py`, then deploy without storing a
+token in the repository:
+
+```bash
+hf upload "${SPACE_ID}" forecast-space . \
+  --repo-type space \
+  --commit-message "Deploy TSFM forecast endpoint"
+```
+
+Validate the deployed `/forecast` route. The wait window covers the initial
+Docker build and a possible cold start:
 
 ```bash
 python scripts/validate_external_model_endpoint.py \
   --endpoint-url "https://your-hf-username-your-forecast-space.hf.space/forecast" \
-  --model-id "your-hf-username/your-model"
+  --model-id "your-hf-username/your-model" \
+  --wait-seconds 900
 ```
 
 A successful check prints `"status": "ok"`. Copy
 `configs/models/community_external_example.yaml`, fill in the public model card
-and Space URLs, and submit it in a leaderboard request.
+and Space URLs, and submit it using the
+[community model request form](https://github.com/zhouziyu02/TS-Live/issues/new?template=community-model.yml).
 
 See [the complete protocol](docs/community_model_submission.md) and
 [`paper/getting_started.tex`](paper/getting_started.tex) for the full workflow.
