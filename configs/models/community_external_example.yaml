@@ -1,0 +1,22 @@
+# Template for community/self-hosted models.
+#
+# Maintainers should copy reviewed entries into the production model config only
+# after `scripts/validate_external_model_endpoint.py` succeeds and the endpoint
+# owner confirms that they accept the inference traffic/cost.
+models:
+  - model_id: hf-user/my-tsfm
+    display_name: My-TSFM
+    enabled: false
+    model_type: external_api
+    org: My Organization
+    model_link: https://huggingface.co/hf-user/my-tsfm
+    code_link: https://huggingface.co/spaces/hf-user/my-tsfm-forecast-api
+    endpoint_url: https://hf-user-my-tsfm-forecast-api.hf.space/forecast
+    timeout: 90
+    max_retries: 2
+    max_context_points: 4096
+    max_response_bytes: 5242880
+    require_https: true
+    send_item_metadata: false
+    # Optional. Store the token only in the evaluator environment, never in git.
+    # auth_token_env: MY_TSFM_ENDPOINT_TOKEN
