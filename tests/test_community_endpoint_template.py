@@ -33,7 +33,7 @@ class CommunityEndpointTemplateTest(unittest.TestCase):
             "parameters": {
                 "prediction_length": 4,
                 "freq": "h",
-                "quantiles": [0.1, 0.5, 0.9],
+                "quantiles": [round(index / 10, 1) for index in range(1, 10)],
             },
         }
 
@@ -42,7 +42,10 @@ class CommunityEndpointTemplateTest(unittest.TestCase):
         self.assertEqual(len(response["outputs"]), 1)
         output = response["outputs"][0]
         self.assertEqual(len(output["mean"]), 4)
-        self.assertEqual(set(output["quantiles"]), {"0.1", "0.5", "0.9"})
+        self.assertEqual(
+            set(output["quantiles"]),
+            {f"{index / 10:g}" for index in range(1, 10)},
+        )
         self.assertTrue(
             all(len(values) == 4 for values in output["quantiles"].values())
         )

@@ -46,9 +46,19 @@ python scripts/validate_external_model_endpoint.py \
   --wait-seconds 900
 ```
 
-A successful check prints `"status": "ok"`. Copy
-`configs/models/community_external_example.yaml`, fill in the public model card
-and Space URLs, and submit it using the
+A successful check prints `"status": "ok"`. Generate schema-checked metadata
+without hand-editing YAML:
+
+```bash
+python scripts/generate_community_model_metadata.py \
+  --model-id "your-hf-username/your-model" \
+  --display-name "Your Model" \
+  --space-id "${SPACE_ID}" \
+  --endpoint-url "https://your-space-direct-url.hf.space/forecast" \
+  --output community_model.yaml
+```
+
+Submit the generated file and validator receipt using the
 [community model request form](https://github.com/zhouziyu02/TS-Live/issues/new?template=community-model.yml).
 
 See [the complete protocol](docs/community_model_submission.md) and

@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import httpx
 
 
-QUANTILES = [0.1, 0.5, 0.9]
+QUANTILES = [round(index / 10, 1) for index in range(1, 10)]
 MAX_RESPONSE_BYTES = 5 * 1024 * 1024
 
 

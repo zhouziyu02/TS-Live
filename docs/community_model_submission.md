@@ -156,6 +156,19 @@ automatically submit or enable the model.
 
 Maintainers should also run this validation before enabling an entry.
 
+Generate the submission metadata with the repository script so that IDs, HTTPS
+requirements, the `/forecast` route, YAML quoting, and the top-level `models`
+schema are checked consistently:
+
+```bash
+python scripts/generate_community_model_metadata.py \
+  --model-id "$MODEL_ID" \
+  --display-name "$DISPLAY_NAME" \
+  --space-id "$SPACE_ID" \
+  --endpoint-url "$ENDPOINT_URL" \
+  --output community_model.yaml
+```
+
 Submit the public model card URL, Space URL, endpoint URL, and the contents of
 `community_model.yaml` using the
 [community model request form](https://github.com/zhouziyu02/TS-Live/issues/new?template=community-model.yml).
