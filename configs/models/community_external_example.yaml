@@ -10,8 +10,8 @@ models:
     model_type: external_api
     org: My Organization
     model_link: https://huggingface.co/hf-user/my-tsfm
-    code_link: https://huggingface.co/spaces/hf-user/my-tsfm-forecast-api
-    endpoint_url: https://hf-user-my-tsfm-forecast-api.hf.space/forecast
+    code_link: https://github.com/example-org/my-tsfm-endpoint
+    endpoint_url: https://forecast.example.org/forecast
     timeout: 90
     max_retries: 2
     max_context_points: 4096

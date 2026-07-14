@@ -33,14 +33,26 @@ def _endpoint_url(value: str) -> str:
     return value
 
 
+def _public_https_url(value: str, label: str) -> str:
+    value = value.strip()
+    parsed = urlparse(value)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError(f"{label} must be an absolute HTTPS URL")
+    if parsed.username or parsed.password:
+        raise ValueError(f"{label} must not contain embedded credentials")
+    if parsed.fragment:
+        raise ValueError(f"{label} must not contain a fragment")
+    return value
+
+
 def build_metadata(
-    *, model_id: str, display_name: str, space_id: str, endpoint_url: str
+    *, model_id: str, display_name: str, code_url: str, endpoint_url: str
 ) -> dict[str, object]:
     model_id = _hub_id(model_id, "model ID")
-    space_id = _hub_id(space_id, "Space ID")
     display_name = display_name.strip()
     if not display_name:
         raise ValueError("display name must not be empty")
+    code_url = _public_https_url(code_url, "code URL")
     endpoint_url = _endpoint_url(endpoint_url)
     return {
         "models": [
@@ -50,7 +62,7 @@ def build_metadata(
                 "enabled": False,
                 "model_type": "external_api",
                 "model_link": f"https://huggingface.co/{model_id}",
-                "code_link": f"https://huggingface.co/spaces/{space_id}",
+                "code_link": code_url,
                 "endpoint_url": endpoint_url,
                 "timeout": 90,
                 "max_retries": 2,
@@ -67,7 +79,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-id", required=True)
     parser.add_argument("--display-name", required=True)
-    parser.add_argument("--space-id", required=True)
+    parser.add_argument(
+        "--code-url",
+        required=True,
+        help="public HTTPS URL for the endpoint source code or service",
+    )
     parser.add_argument("--endpoint-url", required=True)
     parser.add_argument("--output", type=Path, default=Path("community_model.yaml"))
     return parser.parse_args()
@@ -78,7 +94,7 @@ def main() -> int:
     metadata = build_metadata(
         model_id=args.model_id,
         display_name=args.display_name,
-        space_id=args.space_id,
+        code_url=args.code_url,
         endpoint_url=args.endpoint_url,
     )
     rendered = yaml.safe_dump(metadata, sort_keys=False, allow_unicode=True)

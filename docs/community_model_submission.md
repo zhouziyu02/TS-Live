@@ -21,15 +21,18 @@ forecasts.
 
 ## Submission Requirements
 
-Submit a Hugging Face model repo plus a public HTTPS endpoint. The endpoint can
-be a Hugging Face Space, Hugging Face Inference Endpoint, or another service
-operated by the model owner.
+Submit a Hugging Face model repo, a public URL for the endpoint code or service,
+and a public HTTPS forecast endpoint operated by the model owner. The endpoint
+may run on an institutional server, an existing cloud service, or any container
+platform. Hugging Face hosting and a Hugging Face PRO subscription are not
+required.
 
-The repository includes a deployable Hugging Face Docker Space example in
-`examples/community_endpoint/`. Its `README.md`, `Dockerfile`, and
-`requirements.txt` are intended to be copied to the root of a participant's
-Space repository. The Space must be public so the evaluator can call it without
-receiving participant credentials.
+The repository includes a portable FastAPI/Docker example in
+`examples/community_endpoint/`. Copy the files into a public endpoint-code
+repository, replace `forecast_one`, and deploy them on infrastructure you
+control. The resulting `/forecast` route must be reachable without sending
+participant credentials. A paid Hugging Face Space or Inference Endpoint is an
+optional host, not part of the submission protocol.
 
 The submitted config follows `configs/models/community_external_example.yaml`:
 
@@ -38,9 +41,9 @@ models:
   - model_id: hf-user/my-tsfm
     display_name: My-TSFM
     model_type: external_api
-    endpoint_url: https://hf-user-my-tsfm-forecast-api.hf.space/forecast
+    endpoint_url: https://forecast.example.org/forecast
     model_link: https://huggingface.co/hf-user/my-tsfm
-    code_link: https://huggingface.co/spaces/hf-user/my-tsfm-forecast-api
+    code_link: https://github.com/example-org/my-tsfm-endpoint
     enabled: false
 ```
 
@@ -131,22 +134,43 @@ dependencies, and inference cost.
 
 ## Validation
 
-Install the repository requirements and authenticate with Hugging Face before
-uploading the prepared Space directory:
+Install the repository requirements, copy the endpoint template, and replace
+`forecast_one` with the model inference code:
 
 ```bash
 python -m pip install -r requirements.txt
-hf auth login
-hf upload "$SPACE_ID" forecast-space . --repo-type space
+mkdir -p forecast-service
+cp examples/community_endpoint/app.py forecast-service/
+cp examples/community_endpoint/Dockerfile forecast-service/
+cp examples/community_endpoint/requirements.txt forecast-service/
+cp examples/community_endpoint/.dockerignore forecast-service/
 ```
 
-Before review, endpoint owners can run the validator with a wait window that
-covers the initial Docker build and a possible cold start:
+Run and validate it locally before deployment:
+
+```bash
+python -m pip install -r forecast-service/requirements.txt
+python -m uvicorn app:app --app-dir forecast-service \
+  --host 127.0.0.1 --port 7860
+```
+
+In another terminal:
+
+```bash
+python scripts/validate_external_model_endpoint.py \
+  --endpoint-url http://127.0.0.1:7860/forecast \
+  --model-id hf-user/my-tsfm \
+  --allow-http
+```
+
+Deploy `forecast-service/` using the HTTPS-capable provider or server you
+control. Before review, run the validator against the public URL with a wait
+window that covers a possible cold start:
 
 ```bash
 python3 scripts/validate_external_model_endpoint.py \
-  --endpoint-url https://hf-user-my-tsfm-forecast-api.hf.space/forecast \
-  --model-id My-TSFM \
+  --endpoint-url https://forecast.example.org/forecast \
+  --model-id hf-user/my-tsfm \
   --wait-seconds 900
 ```
 
@@ -156,21 +180,19 @@ automatically submit or enable the model.
 
 Maintainers should also run this validation before enabling an entry.
 
-Generate the submission metadata with the repository script so that IDs, HTTPS
-requirements, the `/forecast` route, YAML quoting, and the top-level `models`
-schema are checked consistently:
+Generate the submission metadata without assuming a hosting provider:
 
 ```bash
 python scripts/generate_community_model_metadata.py \
-  --model-id "$MODEL_ID" \
-  --display-name "$DISPLAY_NAME" \
-  --space-id "$SPACE_ID" \
-  --endpoint-url "$ENDPOINT_URL" \
+  --model-id hf-user/my-tsfm \
+  --display-name My-TSFM \
+  --code-url https://github.com/example-org/my-tsfm-endpoint \
+  --endpoint-url https://forecast.example.org/forecast \
   --output community_model.yaml
 ```
 
-Submit the public model card URL, Space URL, endpoint URL, and the contents of
-`community_model.yaml` using the
+Submit the public model card URL, endpoint code or service URL, forecast
+endpoint URL, and the contents of `community_model.yaml` using the
 [community model request form](https://github.com/zhouziyu02/TS-Live/issues/new?template=community-model.yml).
 
 ## Fairness Policy

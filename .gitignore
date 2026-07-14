@@ -5,4 +5,5 @@ __pycache__/
 .env
 community_model.yaml
 forecast-space/
+forecast-service/
 paper/

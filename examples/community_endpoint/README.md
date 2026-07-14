@@ -1,44 +1,34 @@
----
-title: TSFM Forecast Endpoint Template
-emoji: 📈
-colorFrom: blue
-colorTo: yellow
-sdk: docker
-app_port: 7860
----
-
 # Minimal Community Forecast Endpoint
 
 This is a tiny reference implementation for the external model API described in
 the [TS-Live submission protocol](https://github.com/zhouziyu02/TS-Live/blob/main/docs/community_model_submission.md).
 
 It is intentionally a naive forecaster. Replace `forecast_one` with your model
-inference code and deploy it as a **public Hugging Face Docker Space** or
-another HTTPS service owned by the model submitter.
+inference code and deploy it as a public HTTPS service owned by the model
+submitter. The template is standard FastAPI/Docker and is not tied to a hosting
+provider.
 
-## Deploy on Hugging Face
+## Hosting requirement
 
-1. Create a new Hugging Face Space and select **Docker** as the SDK.
-2. Copy `app.py`, `Dockerfile`, and `requirements.txt` from this directory into
-   the root of the Space repository.
-3. Keep the Space public and ensure its `/health` endpoint returns HTTP 200.
-4. Use `https://<owner>-<space-name>.hf.space/forecast` as `endpoint_url`.
+Deploy the files on infrastructure you control and expose container port 7860
+through HTTPS. The public service must provide:
 
-From a TS-Live clone, authenticate and upload this directory with:
+- `GET /health`, which returns HTTP 200;
+- `POST /forecast`, which follows the TS-Live protocol.
 
-```bash
-hf auth login
-hf upload "$SPACE_ID" forecast-space . --repo-type space
-```
+An institutional server, an existing cloud service, or a container platform can
+host the endpoint. Hugging Face Gradio and Docker Spaces currently require a
+paid plan for individuals, so a Space is optional and must not be assumed by
+the submission workflow. A Static Space cannot run this Python service.
 
-Free Spaces can sleep. For reliable repeated evaluation, configure hardware
-that remains available or use a Hugging Face Inference Endpoint.
+Whichever host is used, configure enough capacity for repeated evaluation and
+allow for cold starts within the declared timeout and retry settings.
 
 ## Run locally
 
 ```bash
-pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 7860
+python -m pip install -r requirements.txt
+python -m uvicorn app:app --host 127.0.0.1 --port 7860
 ```
 
 Validate:
@@ -51,5 +41,6 @@ python3 scripts/validate_external_model_endpoint.py \
 ```
 
 Successful validation prints JSON containing `"status": "ok"`. It does not
-upload the model or enable the leaderboard entry; submit the reviewed model
-metadata separately using the TS-Live community model request form.
+deploy the service or enable the leaderboard entry. After local validation,
+deploy the same code behind HTTPS and validate the public `/forecast` URL before
+submitting the generated metadata through the community model request form.

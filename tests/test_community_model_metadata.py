@@ -10,13 +10,14 @@ class CommunityModelMetadataTest(unittest.TestCase):
         metadata = build_metadata(
             model_id="hf-user/my-model",
             display_name='Model "Quoted" Name',
-            space_id="hf-user/my-space",
-            endpoint_url="https://hf-user-my-space.hf.space/forecast",
+            code_url="https://github.com/hf-user/my-endpoint",
+            endpoint_url="https://forecast.example.org/forecast",
         )
         model = metadata["models"][0]
         self.assertFalse(model["enabled"])
         self.assertEqual(model["model_type"], "external_api")
         self.assertEqual(model["display_name"], 'Model "Quoted" Name')
+        self.assertEqual(model["code_link"], "https://github.com/hf-user/my-endpoint")
         self.assertEqual(model["max_response_bytes"], 5 * 1024 * 1024)
 
     def test_rejects_non_https_or_wrong_route(self) -> None:
@@ -28,8 +29,22 @@ class CommunityModelMetadataTest(unittest.TestCase):
                 build_metadata(
                     model_id="hf-user/my-model",
                     display_name="Model",
-                    space_id="hf-user/my-space",
+                    code_url="https://github.com/hf-user/my-endpoint",
                     endpoint_url=endpoint,
+                )
+
+    def test_rejects_non_https_or_credentialed_code_url(self) -> None:
+        for code_url in (
+            "http://github.com/hf-user/my-endpoint",
+            "https://token@example.com/source",
+            "https://example.com/source#fragment",
+        ):
+            with self.subTest(code_url=code_url), self.assertRaises(ValueError):
+                build_metadata(
+                    model_id="hf-user/my-model",
+                    display_name="Model",
+                    code_url=code_url,
+                    endpoint_url="https://forecast.example.org/forecast",
                 )
 
 
